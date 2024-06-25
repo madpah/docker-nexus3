@@ -1,5 +1,9 @@
-# Copyright (c) 2016-present Sonatype, Inc.
 #
+# Copyright (c) 2016-present Sonatype, Inc. All rights reserved.
+# Includes the third-party code listed at http://links.sonatype.com/products/nxrm/attributions.
+# "Sonatype" is a trademark of Sonatype, Inc.
+#
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,8 +21,8 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal
 LABEL name="Nexus Repository Manager" \
       maintainer="Sonatype <support@sonatype.com>" \
       vendor=Sonatype \
-      version="3.68.0-04" \
-      release="3.68.0" \
+      version="3.69.0-02" \
+      release="3.69.0" \
       url="https://sonatype.com" \
       summary="The Nexus Repository Manager server \
           with universal support for popular component formats." \
@@ -36,10 +40,10 @@ LABEL name="Nexus Repository Manager" \
       io.openshift.expose-services="8081:8081" \
       io.openshift.tags="Sonatype,Nexus,Repository Manager"
 
-ARG NEXUS_VERSION=3.68.0-04
+ARG NEXUS_VERSION=3.69.0-02
 ARG JAVA_VERSION=java8
 ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-${JAVA_VERSION}-unix.tar.gz
-ARG NEXUS_DOWNLOAD_SHA256_HASH=230e73725063d694e09154b7602685593d15e74de2b6cc8dd227beb4d27093db
+ARG NEXUS_DOWNLOAD_SHA256_HASH=4161a1bb43d92ad8ca6185fa0da2c0f02dfd62280c5b6e4ac4419df4aecaf55f
 
 # configure nexus runtime
 ENV SONATYPE_DIR=/opt/sonatype
@@ -52,7 +56,7 @@ ENV NEXUS_HOME=${SONATYPE_DIR}/nexus \
 # Install Java & tar
 RUN microdnf update -y \
     && microdnf --setopt=install_weak_deps=0 --setopt=tsflags=nodocs install -y \
-          java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
+    java-1.8.0-openjdk-headless tar procps shadow-utils gzip \
     && microdnf clean all \
     && groupadd --gid 200 -r nexus \
     && useradd --uid 200 -r nexus -g nexus -s /bin/false -d /opt/sonatype/nexus -c 'Nexus Repository Manager user'
@@ -74,12 +78,13 @@ RUN curl -L ${NEXUS_DOWNLOAD_URL} --output nexus-${NEXUS_VERSION}-${JAVA_VERSION
 RUN sed -i '/^-Xms/d;/^-Xmx/d;/^-XX:MaxDirectMemorySize/d' $NEXUS_HOME/bin/nexus.vmoptions
 
 RUN echo "#!/bin/bash" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
-   && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
+    && echo "cd /opt/sonatype/nexus" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && echo "exec ./bin/nexus run" >> ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && chmod a+x ${SONATYPE_DIR}/start-nexus-repository-manager.sh \
+    && sed -e '/^nexus-context/ s:$:${NEXUS_CONTEXT}:' -i ${NEXUS_HOME}/etc/nexus-default.properties
 
 RUN microdnf remove -y shadow-utils
+#RUN microdnf remove -y gzip shadow-utils
 
 VOLUME ${NEXUS_DATA}
 
